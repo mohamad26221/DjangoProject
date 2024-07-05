@@ -95,7 +95,7 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
     
         return student
 
-class LoginSerializer(serializers.Serializer):  # استخدم Serializer بدلاً من ModelSerializer
+class LoginSerializer(serializers.Serializer): 
     email = serializers.EmailField(
         max_length=155,
         required=True,

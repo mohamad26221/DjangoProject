@@ -45,7 +45,6 @@ class LoginUserView(GenericAPIView):
         except CustomAuthenticationFailed as e:
             return Response({'error': e.detail}, status=status.HTTP_200_OK)
         
-        # الحصول على بيانات المستخدم من `serializer`
         response_data = serializer.data
 
         return Response(response_data, status=status.HTTP_200_OK)
