@@ -1,7 +1,7 @@
 from unicodedata import name
 from django.urls import path
 from .views import (
-        RegisterView, 
+        RegisterUserView, 
         StudentRegisterView,
         VerifyUserEmail,
         LoginUserView, 
@@ -11,7 +11,7 @@ from .views import (
 from rest_framework_simplejwt.views import (TokenRefreshView,)
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
+    path('register/', RegisterUserView.as_view(), name='register'),
     path('registerStudent/', StudentRegisterView.as_view(), name='registerStudent'),
     path('verify-email/', VerifyUserEmail, name='verify'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

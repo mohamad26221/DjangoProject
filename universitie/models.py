@@ -18,7 +18,7 @@ class Room(models.Model):
 
     @property
     def number_of_students(self):
-        return self.students.count()  # استخدم related_name هنا
+        return self.students.count() 
     
     
 class UniversitySearchRequest(models.Model):

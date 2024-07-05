@@ -2,9 +2,8 @@ from pathlib import Path
 import environ
 import os
 from datetime import timedelta
-env =  environ.Env(
-    DEBUG=(bool,False)
-)
+env =  environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +26,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'account',
+    'channels',
     'universitie',
     'rest_framework',
     'rest_framework.authtoken',
@@ -67,6 +67,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'subject.wsgi.application'
+ASGI_APPLICATION = 'subject.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database
@@ -124,10 +133,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #REST_Framework_for_login
 AUTH_USER_MODEL = 'account.Customuser'
 REST_FRAMEWORK={
+    'EXCEPTION_HANDLER': 'account.serializers.custom_exception_handler',
     'NON_FIELD_ERRORS_KEY':'error',
         'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        
     )
 
 }
@@ -143,3 +154,19 @@ EMAIL_HOST_PASSWORD='xeun xbsn ethz ecyk'
 DEFAULT_FROM_EMAIL='info@ad.com'
 EMAIL_PORT='587'
 EMAIL_USE_TLS=True
+PUSHER_APP_ID = env('PUSHER_APP_ID')
+PUSHER_KEY = env('PUSHER_KEY')
+PUSHER_SECRET = env('PUSHER_SECRET')
+PUSHER_CLUSTER = env('PUSHER_CLUSTER')
+PUSHER_SSL = True
+# import os
+# from dotenv import load_dotenv
+
+# # Load environment variables from .env file
+# load_dotenv()
+
+# # Pusher configuration
+# PUSHER_APP_ID = os.getenv('PUSHER_APP_ID')
+# PUSHER_KEY = os.getenv('PUSHER_KEY')
+# PUSHER_SECRET = os.getenv('PUSHER_SECRET')
+# PUSHER_CLUSTER = os.getenv('PUSHER_CLUSTER')

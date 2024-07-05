@@ -1,6 +1,7 @@
 
 import json
 from dataclasses import field
+from django.core.validators import validate_email
 from .models import Customuser ,Student
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -14,7 +15,27 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from .utils import send_normal_email
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.views import exception_handler
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError
 
+class CustomAuthenticationFailed(APIException):
+    status_code = 200
+    default_detail = 'Invalid credentials.'
+    default_code = 'authentication_failed'
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+
+    if isinstance(exc, CustomAuthenticationFailed):
+        custom_response_data = {
+            'error': str(exc.detail),
+        }
+
+        return Response(custom_response_data, status=status.HTTP_200_OK)
+
+    return response
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
@@ -66,50 +87,71 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        validated_data.pop('password2')  # Remove password2 from validated_data
+        validated_data.pop('password2')  
         password = validated_data.pop('password')
         user = Customuser.objects.create_user(password=password, **validated_data)
     
-        # Create a student record associated with the newly created user
         student = Student.objects.create(user=user, **validated_data)
     
         return student
 class LoginSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=155, min_length=6)
-    password=serializers.CharField(max_length=68, write_only=True)
-    full_name=serializers.CharField(max_length=255, read_only=True)
-    access_token=serializers.CharField(max_length=255, read_only=True)
-    refresh_token=serializers.CharField(max_length=255, read_only=True)
-    fathername=serializers.CharField(max_length=255, read_only=True)
+    email = serializers.EmailField(
+        max_length=155,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': 'البريد غير صالح'
+        }
+    )
+    password = serializers.CharField(
+        max_length=68,
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'required': 'كلمة المرور مطلوبة',
+        }
+    )
+    full_name = serializers.CharField(max_length=255, read_only=True)
+    access_token = serializers.CharField(max_length=255, read_only=True)
+    refresh_token = serializers.CharField(max_length=255, read_only=True)
+    fathername = serializers.CharField(max_length=255, read_only=True)
 
     class Meta:
         model = Customuser
-        fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token','fathername']
-
-    
+        fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token', 'fathername']
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
-        request=self.context.get('request')
+
+        if email:
+            try:
+                validate_email(email)
+            except ValidationError:
+                raise serializers.ValidationError({'email': 'البريد غير صالح'})
+        if email is None or password is None:
+            raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+        email = email.strip() if email else None
+        password = password.strip() if password else None
+        if not email or not password:
+            raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+        request = self.context.get('request')
+        
         user = authenticate(request, email=email, password=password)
+
         if not user:
-            raise AuthenticationFailed("invalid credential try again")
+            raise serializers.ValidationError({'email': 'كلمة المرور أو البريد الإلكتروني غير صحيحين'})
         if not user.is_verified:
-            raise AuthenticationFailed("Email is not verified")
-        tokens=user.tokens()
-        data= (user.fathername,user.phone,user.section)
+            raise serializers.ValidationError({'email': 'البريد الإلكتروني غير مفعل.'})
+        tokens = user.tokens()
         return {
-            "fathername":user.fathername,
-            'email':user.email,
-            'full_name':user.get_full_name,
-            'full_name2':user.get_full_name,
-
-            # "access_token":str(tokens.get('access')),
-            # "refresh_token":str(tokens.get('refresh'))
+            "fathername": user.fathername,
+            'email': user.email,
+            'full_name': user.get_full_name,
+            "access_token": str(tokens.get('access')),
+            # "refresh_token": str(tokens.get('refresh'))
         }
-
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 
@@ -136,9 +178,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
                 }
             send_normal_email(data)
 
-        return super().validate(attrs)
-
-    
+        return super().validate(attrs)  
 class SetNewPasswordSerializer(serializers.Serializer):
     password=serializers.CharField(max_length=100, min_length=6, write_only=True)
     confirm_password=serializers.CharField(max_length=100, min_length=6, write_only=True)
@@ -166,9 +206,6 @@ class SetNewPasswordSerializer(serializers.Serializer):
             return user
         except Exception as e:
             return AuthenticationFailed("link is invalid or has expired")
-
-
-    
 class LogoutUserSerializer(serializers.Serializer):
     refresh_token=serializers.CharField()
 

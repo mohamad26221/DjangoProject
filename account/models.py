@@ -59,9 +59,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     @property
     def get_data(self):
         user = Customuser.objects.all().filter(email=self.email)
-        print(user)
         return user
-
 class OneTimePassword(models.Model):
     user=models.OneToOneField(Customuser, on_delete=models.CASCADE)
     otp=models.CharField(max_length=6)

@@ -12,8 +12,7 @@ class Universities(APIView):
     def get(self, request):
         queryset = Universitie.objects.all()
         data_list = list(queryset.values_list('name', flat=True)) 
-        return Response(data_list)
-    
+        return Response(data_list) 
 @api_view(['POST'])
 def units(request):
     if request.method == 'POST':

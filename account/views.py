@@ -1,10 +1,11 @@
 from rest_framework import generics
+from rest_framework.exceptions import APIException
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from account.models import OneTimePassword
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
-from account.serializers import PasswordResetRequestSerializer,LogoutUserSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer,StudentRegisterSerializer
+from account.serializers import PasswordResetRequestSerializer,LogoutUserSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer
 from rest_framework import status
 from .utils import send_generated_otp_to_email
 from django.utils.http import urlsafe_base64_decode
@@ -13,10 +14,13 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.permissions import IsAuthenticated
 from .models import Customuser,Student
 from .serializers import StudentRegisterSerializer
-# Create your views here.
+class CustomAuthenticationFailed(APIException):
+    status_code = 200
+    default_detail = 'Invalid credentials.'
+    default_code = 'authentication_failed'
 
 
-class RegisterView(GenericAPIView):
+class RegisterUserView(GenericAPIView):
     serializer_class = UserRegisterSerializer
 
     def post(self, request):
@@ -31,13 +35,30 @@ class RegisterView(GenericAPIView):
                 'message':'thanks for signing up a passcode has be sent to verify your email'
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class LoginUserView(GenericAPIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except CustomAuthenticationFailed as e:
+            return Response({'error': e.detail}, status=status.HTTP_200_OK)
+        user_data = serializer.validated_data
+        response_data = {
+            'email': user_data['email'],
+            'full_name': user_data['full_name'],
+            'mothername': user_data['mothername'],
+            'university': user_data['university'],
+            'fathername': user_data['fathername'],
+            # يمكنك استكمال الحقول الأخرى التي تريدها هنا
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 class StudentRegisterView(generics.CreateAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentRegisterSerializer
     permission_classes = (AllowAny,)
-
-
-
 @api_view(['POST'])
 def VerifyUserEmail(request):
     if request.method == 'POST':
@@ -53,19 +74,7 @@ def VerifyUserEmail(request):
                 }, status=status.HTTP_200_OK)
             return Response({'message':'passcode is invalid user is already verified'}, status=status.HTTP_204_NO_CONTENT)
         except OneTimePassword.DoesNotExist as identifier:
-            return Response({'message':'passcode not provided'}, status=status.HTTP_400_BAD_REQUEST)
-        
-class LoginUserView(GenericAPIView):
-    serializer_class=LoginSerializer
-    def post(self, request):
-        serializer= self.serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        print(serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
-
-
+            return Response({'message':'passcode not provided'}, status=status.HTTP_400_BAD_REQUEST)   
 class PasswordResetRequestView(GenericAPIView):
     serializer_class=PasswordResetRequestSerializer
 
@@ -73,11 +82,6 @@ class PasswordResetRequestView(GenericAPIView):
         serializer=self.serializer_class(data=request.data, context={'request':request})
         serializer.is_valid(raise_exception=True)
         return Response({'message':'we have sent you a link to reset your password'}, status=status.HTTP_200_OK)
-        # return Response({'message':'user with that email does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-    
-
-
-
 class PasswordResetConfirm(GenericAPIView):
 
     def get(self, request, uidb64, token):
@@ -91,7 +95,6 @@ class PasswordResetConfirm(GenericAPIView):
 
         except DjangoUnicodeDecodeError as identifier:
             return Response({'message':'token is invalid or has expired'}, status=status.HTTP_401_UNAUTHORIZED)
-
 class SetNewPasswordView(GenericAPIView):
     serializer_class=SetNewPasswordSerializer
 
@@ -99,8 +102,6 @@ class SetNewPasswordView(GenericAPIView):
         serializer=self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({'success':True, 'message':"password reset is succesful"}, status=status.HTTP_200_OK)
-
-
 class TestingAuthenticatedReq(GenericAPIView):
     permission_classes=[IsAuthenticated]
 
@@ -110,7 +111,6 @@ class TestingAuthenticatedReq(GenericAPIView):
             'msg':'its works'
         }
         return Response(data, status=status.HTTP_200_OK)
-
 class LogoutApiView(GenericAPIView):
     serializer_class=LogoutUserSerializer
     permission_classes = [IsAuthenticated]
