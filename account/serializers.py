@@ -94,11 +94,12 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         student = Student.objects.create(user=user, **validated_data)
     
         return student
-class LoginSerializer(serializers.ModelSerializer):
+
+class LoginSerializer(serializers.Serializer):  # استخدم Serializer بدلاً من ModelSerializer
     email = serializers.EmailField(
         max_length=155,
-        required=False,
-        allow_blank=True,
+        required=True,
+        allow_blank=False,
         error_messages={
             'invalid': 'البريد غير صالح'
         }
@@ -106,20 +107,12 @@ class LoginSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         max_length=68,
         write_only=True,
-        required=False,
-        allow_blank=True,
+        required=True,
+        allow_blank=False,
         error_messages={
             'required': 'كلمة المرور مطلوبة',
         }
     )
-    full_name = serializers.CharField(max_length=255, read_only=True)
-    access_token = serializers.CharField(max_length=255, read_only=True)
-    refresh_token = serializers.CharField(max_length=255, read_only=True)
-    fathername = serializers.CharField(max_length=255, read_only=True)
-
-    class Meta:
-        model = Customuser
-        fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token', 'fathername']
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -130,28 +123,54 @@ class LoginSerializer(serializers.ModelSerializer):
                 validate_email(email)
             except ValidationError:
                 raise serializers.ValidationError({'email': 'البريد غير صالح'})
+
         if email is None or password is None:
             raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+
         email = email.strip() if email else None
         password = password.strip() if password else None
+
         if not email or not password:
             raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+
         request = self.context.get('request')
         
         user = authenticate(request, email=email, password=password)
 
         if not user:
             raise serializers.ValidationError({'email': 'كلمة المرور أو البريد الإلكتروني غير صحيحين'})
+
         if not user.is_verified:
             raise serializers.ValidationError({'email': 'البريد الإلكتروني غير مفعل.'})
+
+        self.context['user'] = user
+        return attrs
+
+    def to_representation(self, instance):
+        user = self.context['user']
         tokens = user.tokens()
         return {
-            "fathername": user.fathername,
-            'email': user.email,
             'full_name': user.get_full_name,
-            "access_token": str(tokens.get('access')),
-            # "refresh_token": str(tokens.get('refresh'))
+            'fathername': user.fathername,
+            'mothername': user.mothername,
+            'phone': user.phone,
+            'idNumber': user.idNumber,
+            'idNationalNumber': user.idNationalNumber,
+            'university': user.university.name if user.university else None,
+            'faculty': user.faculty,
+            'section': user.section,
+            'unitNumber': user.unitNumber.number if user.unitNumber else None,
+            'room': user.room.number if user.room else None,
+            'city': user.city,
+            'year': user.year,
+            'status': user.status,
+            'job': user.job,
+            'typejob': user.typejob,
+            'img': user.img,
+            'access_token': str(tokens.get('access')),
+            # 'refresh_token': str(tokens.get('refresh'))  # Uncomment if you need the refresh token
         }
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 

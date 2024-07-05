@@ -44,15 +44,9 @@ class LoginUserView(GenericAPIView):
             serializer.is_valid(raise_exception=True)
         except CustomAuthenticationFailed as e:
             return Response({'error': e.detail}, status=status.HTTP_200_OK)
-        user_data = serializer.validated_data
-        response_data = {
-            'email': user_data['email'],
-            'full_name': user_data['full_name'],
-            'mothername': user_data['mothername'],
-            'university': user_data['university'],
-            'fathername': user_data['fathername'],
-            # يمكنك استكمال الحقول الأخرى التي تريدها هنا
-        }
+        
+        # الحصول على بيانات المستخدم من `serializer`
+        response_data = serializer.data
 
         return Response(response_data, status=status.HTTP_200_OK)
 class StudentRegisterView(generics.CreateAPIView):

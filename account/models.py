@@ -35,6 +35,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     status = models.CharField(max_length=20,default=None,null=True)
     job = models.CharField(max_length=20,null=True,default=None)
     typejob = models.CharField(max_length=20,null=True,default=None)
+    img = models.CharField(max_length=200,null=True,default=None)
 
     USERNAME_FIELD = "email"
 
