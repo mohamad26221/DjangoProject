@@ -122,26 +122,26 @@ class LoginSerializer(serializers.Serializer):
             try:
                 validate_email(email)
             except ValidationError:
-                raise serializers.ValidationError({'email': 'البريد غير صالح'})
+                raise serializers.ValidationError({'message': 'البريد غير صالح'})
 
         if email is None or password is None:
-            raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+            raise serializers.ValidationError({'message': 'البريد الإلكتروني مطلوب وكلمة المرور مطلوبة'})
 
         email = email.strip() if email else None
         password = password.strip() if password else None
 
         if not email or not password:
-            raise serializers.ValidationError({'email': 'البريد الإلكتروني مطلوب', 'password': 'كلمة المرور مطلوبة'})
+            raise serializers.ValidationError({'message': 'البريد الإلكتروني مطلوب وكلمة المرور مطلوبة'})
 
         request = self.context.get('request')
         
         user = authenticate(request, email=email, password=password)
 
         if not user:
-            raise serializers.ValidationError({'email': 'كلمة المرور أو البريد الإلكتروني غير صحيحين'})
+            raise serializers.ValidationError({'message': 'كلمة المرور أو البريد الإلكتروني غير صحيحين'})
 
         if not user.is_verified:
-            raise serializers.ValidationError({'email': 'البريد الإلكتروني غير مفعل.'})
+            raise serializers.ValidationError({'message': 'البريد الإلكتروني غير مفعل.'})
 
         self.context['user'] = user
         return attrs
@@ -150,7 +150,8 @@ class LoginSerializer(serializers.Serializer):
         user = self.context['user']
         tokens = user.tokens()
         return {
-            'full_name': user.get_full_name,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
             'fathername': user.fathername,
             'mothername': user.mothername,
             'phone': user.phone,
@@ -159,7 +160,7 @@ class LoginSerializer(serializers.Serializer):
             'university': user.university.name if user.university else None,
             'faculty': user.faculty,
             'section': user.section,
-            'unitNumber': user.unitNumber.number if user.unitNumber else None,
+            'unitNumber': user.unitNumber.Unit_name if user.unitNumber else None,
             'room': user.room.number if user.room else None,
             'city': user.city,
             'year': user.year,
@@ -170,7 +171,6 @@ class LoginSerializer(serializers.Serializer):
             'access_token': str(tokens.get('access')),
             # 'refresh_token': str(tokens.get('refresh'))  # Uncomment if you need the refresh token
         }
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 

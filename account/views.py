@@ -6,7 +6,7 @@ from account.models import OneTimePassword
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view
 from account.serializers import PasswordResetRequestSerializer,LogoutUserSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer
-from rest_framework import status
+from rest_framework import status , serializers
 from .utils import send_generated_otp_to_email
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
@@ -18,8 +18,6 @@ class CustomAuthenticationFailed(APIException):
     status_code = 200
     default_detail = 'Invalid credentials.'
     default_code = 'authentication_failed'
-
-
 class RegisterUserView(GenericAPIView):
     serializer_class = UserRegisterSerializer
 
@@ -42,9 +40,19 @@ class LoginUserView(GenericAPIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         try:
             serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as e:
+            # الحصول على رسائل الأخطاء من استثناء `ValidationError`
+            detail = e.detail
+            if isinstance(detail, dict):
+                # دمج الرسائل في رسالة واحدة
+                message = "; ".join(" ".join(errors) for errors in detail.values())
+            else:
+                message = detail
+            return Response({'message': message}, status=status.HTTP_200_OK)
         except CustomAuthenticationFailed as e:
-            return Response({'error': e.detail}, status=status.HTTP_200_OK)
+            return Response({'message': e.detail}, status=status.HTTP_200_OK)
         
+        # الحصول على بيانات المستخدم من `serializer`
         response_data = serializer.data
 
         return Response(response_data, status=status.HTTP_200_OK)
