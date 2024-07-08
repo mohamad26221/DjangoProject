@@ -36,7 +36,6 @@ def custom_exception_handler(exc, context):
         return Response(custom_response_data, status=status.HTTP_200_OK)
 
     return response
-
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
     password2= serializers.CharField(max_length=68, min_length=6, write_only=True)
@@ -94,7 +93,6 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         student = Student.objects.create(user=user, **validated_data)
     
         return student
-
 class LoginSerializer(serializers.Serializer): 
     email = serializers.EmailField(
         max_length=155,
@@ -150,25 +148,25 @@ class LoginSerializer(serializers.Serializer):
         user = self.context['user']
         tokens = user.tokens()
         return {
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'fathername': user.fathername,
-            'mothername': user.mothername,
-            'phone': user.phone,
+            'firstName': user.first_name,
+            'lastName': user.last_name,
+            'fatherName': user.fathername,
+            'motherName': user.mothername,
+            'phoneNumber': user.phone,
             'idNumber': user.idNumber,
             'idNationalNumber': user.idNationalNumber,
             'university': user.university.name if user.university else None,
             'faculty': user.faculty,
             'section': user.section,
             'unitNumber': user.unitNumber.Unit_name if user.unitNumber else None,
-            'room': user.room.number if user.room else None,
+            'roomNumber': user.room.number if user.room else None,
             'city': user.city,
             'year': user.year,
             'status': user.status,
             'job': user.job,
             'typejob': user.typejob,
             'img': user.img,
-            'access_token': str(tokens.get('access')),
+            'token': str(tokens.get('access')),
             # 'refresh_token': str(tokens.get('refresh'))  # Uncomment if you need the refresh token
         }
 class PasswordResetRequestSerializer(serializers.Serializer):
