@@ -153,7 +153,6 @@ class LoginSerializer(serializers.Serializer):
             'fatherName': user.fathername,
             'motherName': user.mothername,
             'phoneNumber': user.phone,
-            'idNumber': user.idNumber,
             'idNationalNumber': user.idNationalNumber,
             'university': user.university.name if user.university else None,
             'faculty': user.faculty,
@@ -164,7 +163,6 @@ class LoginSerializer(serializers.Serializer):
             'year': user.year,
             'status': user.status,
             'job': user.job,
-            'typejob': user.typejob,
             'img': user.img,
             'token': str(tokens.get('access')),
             # 'refresh_token': str(tokens.get('refresh'))  # Uncomment if you need the refresh token
