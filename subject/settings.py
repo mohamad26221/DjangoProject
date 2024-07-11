@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'universitie',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -126,15 +128,16 @@ USE_TZ = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 STATIC_URL = '/static/'
+STATIC_ROOT = "C:/Users/Administrator/Desktop/Django-project/venv/subject/staticfiles/"
 
-STATICFILES_DIRS = [
-    r"C:\Users\Administrator\Desktop\Django-project\venv\subject\staticfiles",
-]
+# STATICFILES_DIRS = [
+#     r"C:\Users\Administrator\Desktop\Django-project\venv\subject\staticfiles",
+# ]
 
 
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/home/mhmd26221/latest-version/media/'
+MEDIA_ROOT = 'C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/'
 
 
 # Default primary key field type
@@ -157,15 +160,12 @@ REST_FRAMEWORK={
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-EMAIL_HOST= 'smtp.gmail.com'
-EMAIL_HOST_USER='garethbale26221@gmail.com'
-EMAIL_HOST_PASSWORD='xeun xbsn ethz ecyk'
-DEFAULT_FROM_EMAIL='info@ad.com'
-EMAIL_PORT='587'
-EMAIL_USE_TLS=True
+
 PUSHER_APP_ID = env('PUSHER_APP_ID')
 PUSHER_KEY = env('PUSHER_KEY')
 PUSHER_SECRET = env('PUSHER_SECRET')

@@ -5,11 +5,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .managers import UserManager
 from universitie.models import Universitie , Unit , Room
 
-
 AUTH_PROVIDERS ={'email':'email', 'google':'google', 'github':'github', 'linkedin':'linkedin'}
 
 class Customuser(AbstractBaseUser, PermissionsMixin):
-    id = models.BigAutoField(primary_key=True, editable=False) 
+    id = models.AutoField(primary_key=True) 
     email = models.EmailField(max_length=255, verbose_name=_("Email Address"), unique=True)
     first_name = models.CharField(max_length=100, verbose_name=_("First Name"))
     last_name = models.CharField(max_length=100, verbose_name=_("Last Name"))
@@ -32,11 +31,13 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     room = models.ForeignKey(Room, on_delete=models.CASCADE,default=None,null=True)
     city = models.CharField(max_length=20,default=None,null=True)
     year = models.IntegerField(default=None,null=True)
-    status = models.CharField(max_length=20,default=None,null=True)
-    job = models.CharField(max_length=20,null=True,default=None)
-    typejob = models.CharField(max_length=20,null=True,default=None)
+    typeJob = models.CharField(max_length=10, default=None,null=True)
     img = models.CharField(max_length=200,null=True,default=None)
-
+    status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)
+    USER_TYPE_CHOICES = (
+        ('student', 'Student'),
+        ('staff', 'Staff'),)
+    job = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='student',null=True)
     USERNAME_FIELD = "email"
 
     REQUIRED_FIELDS = ["first_name", "last_name"]
@@ -49,33 +50,50 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
             "refresh":str(refresh),
             "access":str(refresh.access_token)
         }
-
-
     def __str__(self):
-        return self.first_name
-
+        return f"{self.first_name} {self.last_name}"
     @property
     def get_full_name(self):
         return f"{self.first_name.title()} {self.last_name.title()}"
 
-class OneTimePassword(models.Model):
-    user=models.OneToOneField(Customuser, on_delete=models.CASCADE)
-    otp=models.CharField(max_length=6)
-
-
-    def __str__(self):
-        return f"{self.user.first_name} - otp code"
 class Student(models.Model):
     user = models.OneToOneField(Customuser, on_delete=models.CASCADE, related_name='student_profile')
-    email = models.EmailField(max_length=255,default=None,null=True)
+    email = models.EmailField(max_length=255,default=None,null=True, unique=True)
     first_name = models.CharField(max_length=100,default=None,null=True)
     last_name = models.CharField(max_length=100,default=None,null=True)
     phone = models.CharField(max_length=15,default=None,null=True)
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='students')
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='students_in_room',default=None,null=True)
     university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
+    idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     faculty = models.CharField(max_length=20,default=None,null=True)
     section = models.CharField(max_length=20,default=None,null=True)
-    year = models.IntegerField(default=None,null=True)   
+    year = models.IntegerField(default=None,null=True)
+    status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)   
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+class Staff(models.Model):
+    user = models.OneToOneField(Customuser, on_delete=models.CASCADE)
+    email = models.EmailField(max_length=255,default=None,null=True, unique=True)
+    first_name = models.CharField(max_length=100,default=None,null=True)
+    last_name = models.CharField(max_length=100,default=None,null=True)
+    phone = models.CharField(max_length=15,default=None,null=True)
+    idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
+    university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
+    year = models.IntegerField(default=None,null=True)
+    typeJob = models.CharField(max_length=10, default=None,null=True)  
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+class RegistrationRequest(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
+    unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
+    idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='requests_for_room',default=None,null=True)
+    attachments = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/')
+    payment_method = models.CharField(max_length=50)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='في انتظار الموافقة')
+
+    def __str__(self):
+        return f"Request for {self.student} at {self.university}"

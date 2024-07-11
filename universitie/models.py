@@ -12,14 +12,10 @@ class Unit(models.Model):
 class Room(models.Model):
     number = models.CharField(max_length=30)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    number_of_students = models.IntegerField(default=0,null=True)
     
     def __str__(self):
         return self.number
-
-    @property
-    def number_of_students(self):
-        return self.students.count() 
-    
     
 class UniversitySearchRequest(models.Model):
     university_name = models.CharField(max_length=100)
