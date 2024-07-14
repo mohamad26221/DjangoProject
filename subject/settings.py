@@ -26,6 +26,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'account',
+    'service',
     'channels',
     'universitie',
     'rest_framework',

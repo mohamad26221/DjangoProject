@@ -90,7 +90,7 @@ class RegistrationRequest(models.Model):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='requests_for_room',default=None,null=True)
-    attachments = models.FileField(upload_to='/home/mhmd26221/latest-version/account/attachments/')
+    attachments = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/')
     payment_method = models.CharField(max_length=50)
     timestamp = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default='في انتظار الموافقة')

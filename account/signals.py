@@ -1,6 +1,8 @@
-from django.db.models.signals import post_save,post_delete,pre_save
+from django.db.models.signals import post_save,post_delete,pre_save,pre_delete
 from django.dispatch import receiver
 from .models import Student,Customuser,Staff
+from django.db.models import F
+from service.models import BreadOrder
 
 @receiver(pre_save, sender=Student)
 def store_old_room(sender, instance, **kwargs):
@@ -107,3 +109,7 @@ def create_student_profile(sender, instance, created, **kwargs):
             instance.save(update_fields=['is_staff'])
         except Staff.DoesNotExist:
             pass 
+@receiver(pre_delete, sender=BreadOrder)
+def update_rule(sender, instance, **kwargs):
+    current_position = instance.rule
+    BreadOrder.objects.filter(rule__gt=current_position).update(rule=F('rule') - 1)

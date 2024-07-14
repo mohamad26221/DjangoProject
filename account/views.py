@@ -2,6 +2,8 @@ from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404, redirect
+from service.models import BreadOrder
 from rest_framework import status , serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegisterSerializer, LoginSerializer,RegistrationRequestSerializer
@@ -52,7 +54,7 @@ class RegistrationRequestView(GenericAPIView):
             student.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class LogoutView(APIView):
+class LogoutView(APIView):  
     def post(self, request):
         refresh_token = request.data.get("refresh_token")
         if refresh_token is None:
