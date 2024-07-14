@@ -62,7 +62,7 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
         }
     def validate_email(self, value):
         if RegistrationRequest.objects.filter(student__email=value).exists():
-            raise serializers.ValidationError("This email has already been used for a registration request.")
+            raise serializers.ValidationError("البريد الالكتروني مستخدم من قبل في التسجيل")
         return value
 
     def create(self, validated_data):
@@ -71,9 +71,9 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
         try:
             student = Student.objects.get(email=email)
         except Student.DoesNotExist:
-            raise serializers.ValidationError("Student not found with this email.")
+            raise serializers.ValidationError("البريد الالكتروني هذا غير موجود تاكد من صحة الادخال")
         if RegistrationRequest.objects.filter(student=student).exists():
-            raise serializers.ValidationError("A registration request already exists for this student.")
+            raise serializers.ValidationError("تم تسجيل هذا الطالب بالفعل")
         
         
         registration_request = RegistrationRequest.objects.create(

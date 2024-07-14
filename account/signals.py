@@ -71,13 +71,13 @@ def create_student_profile(sender, instance, created, **kwargs):
             student = Student.objects.get(user=instance)
             Staff.objects.create(
                 user=instance,
-                email=student.email,
-                first_name=student.first_name,
-                last_name=student.last_name,
-                phone=student.phone,
-                university=student.university,
-                year=student.year,
-                idNationalNumber=student.idNationalNumber,
+                email=instance.email,
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                phone=instance.phone,
+                university=instance.university,
+                idNationalNumber=instance.idNationalNumber,
+                year=instance.year,
                 typeJob=instance.typeJob,
             )
             student.delete()
@@ -90,13 +90,17 @@ def create_student_profile(sender, instance, created, **kwargs):
             employee = Staff.objects.get(user=instance)
             Student.objects.create(
                 user=instance,
-                email=employee.email,
-                first_name=employee.first_name,
-                last_name=employee.last_name,
-                phone=employee.phone,
-                university=employee.university,
-                year=employee.year,
-                idNationalNumber=employee.idNationalNumber,
+                email=instance.email,
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                phone=instance.phone,
+                unitNumber=instance.unitNumber,
+                room=instance.room,
+                university=instance.university,
+                faculty=instance.faculty,
+                section=instance.section,
+                idNationalNumber=instance.idNationalNumber,
+                year=instance.year,
             )
             employee.delete()
             instance.is_staff = False  
