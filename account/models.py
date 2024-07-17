@@ -33,7 +33,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE,default=None,null=True)
     city = models.CharField(max_length=20,default=None,null=True)
-    year = models.DateField(default=None,null=True)
+    year = models.CharField(max_length=10,default=None,null=True)
     typeJob = models.CharField(max_length=10, default=None,null=True)
     img = models.CharField(max_length=200,null=True,default=None)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)
@@ -72,7 +72,7 @@ class Student(models.Model):
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     faculty = models.CharField(max_length=20,default=None,null=True)
     section = models.CharField(max_length=20,default=None,null=True)
-    year = models.DateField(default=None,null=True)
+    year = models.CharField(max_length=10,default=None,null=True)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)   
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -92,7 +92,7 @@ class Staff(models.Model):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
-    year = models.DateField(default=None,null=True)
+    year = models.CharField(max_length=10,default=None,null=True)
     USER_TYPE_CHOICES = (
         ('مشرف وحدة', 'مشرف وحدة'),
         ('موظف ذاتية','موظف ذاتية'),
