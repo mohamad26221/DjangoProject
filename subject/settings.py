@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'account',
     'service',
     'channels',
+    'guardian',
     'universitie',
     'rest_framework',
     'rest_framework.authtoken',
@@ -116,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Damascus'
 
 USE_I18N = True
 
@@ -147,6 +148,11 @@ MEDIA_ROOT = 'C:/Users/Administrator/Desktop/Django-project/venv/subject/account
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #REST_Framework_for_login
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', 
+    'guardian.backends.ObjectPermissionBackend',
+)
+
 AUTH_USER_MODEL = 'account.Customuser'
 REST_FRAMEWORK={
     'EXCEPTION_HANDLER': 'account.serializers.custom_exception_handler',
@@ -166,20 +172,17 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'garethbale26221@gmail.com'  
+EMAIL_HOST_PASSWORD = 'jdpc bhga anpw deah'  
+DEFAULT_FROM_EMAIL = 'Tishreen@gmail.com'  
+
 
 PUSHER_APP_ID = env('PUSHER_APP_ID')
 PUSHER_KEY = env('PUSHER_KEY')
 PUSHER_SECRET = env('PUSHER_SECRET')
 PUSHER_CLUSTER = env('PUSHER_CLUSTER')
 PUSHER_SSL = True
-# import os
-# from dotenv import load_dotenv
-
-# # Load environment variables from .env file
-# load_dotenv()
-
-# # Pusher configuration
-# PUSHER_APP_ID = os.getenv('PUSHER_APP_ID')
-# PUSHER_KEY = os.getenv('PUSHER_KEY')
-# PUSHER_SECRET = os.getenv('PUSHER_SECRET')
-# PUSHER_CLUSTER = os.getenv('PUSHER_CLUSTER')

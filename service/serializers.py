@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BreadOrder, Student
+from .models import BreadOrder, Student ,JobRequest,MaintenanceRequest
 
 class BreadOrderSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(write_only=True)
@@ -37,3 +37,29 @@ class BreadOrderSerializer(serializers.ModelSerializer):
 
         bread_order = BreadOrder.objects.create(**validated_data)
         return bread_order
+class JobRequestSerializer(serializers.ModelSerializer):
+    request_number = serializers.ReadOnlyField()
+    status = serializers.ReadOnlyField()
+    class Meta:
+        model = JobRequest
+        fields = ['student', 'attachments', 'request_number', 'status']
+    def validate(self, data):
+        if JobRequest.objects.filter(student=data['student']).exists():
+            raise serializers.ValidationError("لا يمكنك تقديم اكثر من طلب")
+        return data
+    def create(self, validated_data):
+        job_request = JobRequest.objects.create(
+            student=validated_data['student'],
+            attachments=validated_data['attachments']
+        )
+        return job_request
+class MaintenanceRequestSerializer(serializers.ModelSerializer):
+    request_number = serializers.ReadOnlyField()
+    status = serializers.ReadOnlyField()
+    class Meta:
+        model = MaintenanceRequest
+        fields = ['student', 'room', 'unitNumber', 'Fail_description', 'Fail_photo', 'request_number', 'status']
+    def validate(self, data):
+        if MaintenanceRequest.objects.filter(student=data['student']).exists():
+            raise serializers.ValidationError("لا يمكنك تقديم اكثر من طلب")
+        return data        

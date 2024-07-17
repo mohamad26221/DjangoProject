@@ -1,8 +1,6 @@
 from django.contrib import admin
 from .models import Customuser ,Student,Staff,RegistrationRequest
-from service.models import BreadOrder
-from django.utils import timezone
-from datetime import timedelta
+from service.models import BreadOrder ,JobRequest,MaintenanceRequest
 from universitie.models import Universitie,Unit,Room
 from django.contrib.sessions.models import Session
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
@@ -10,40 +8,54 @@ class RoomAdmin(admin.ModelAdmin):
     list_display = ['number','unit','number_of_students']
     list_filter = ['unit']
     search_fields = ['number']
-@admin.action(description='الموافقة على الطلب')
-def approve_requests(modeladmin, request, queryset):
-    for registration_request in queryset:
-        if registration_request.status != 'تمت الموافقة':
-            student = registration_request.student
-            student.university = registration_request.university
-            student.unitNumber = registration_request.unitNumber
-            student.room = registration_request.room
-            student.status = 'تمت الموافقة'
-            student.save()
-            registration_request.status = 'تمت الموافقة'
-            registration_request.save()
-@admin.action(description='رفض الطلب')
-def reject_requests(modeladmin, request, queryset):
-    for registration_request in queryset:
-        if registration_request.status != 'مرفوض':
-            student = registration_request.student
-            student.university = registration_request.university
-            student.unitNumber = registration_request.unitNumber
-            student.room = registration_request.room
-            student.status = 'مرفوض'
-            student.save()
-            registration_request.status = 'مرفوض'
-            registration_request.save()
 class RegistrationRequestAdmin(admin.ModelAdmin):
     list_display = ['student', 'university', 'unitNumber', 'room', 'status']
     list_filter = ['status']
     search_fields = ['idNationalNumber']
+    def reject_requests(modeladmin, request, queryset):
+        for registration_request in queryset:
+            if registration_request.status != 'مرفوض':
+                student = registration_request.student
+                student.university = registration_request.university
+                student.unitNumber = registration_request.unitNumber
+                student.room = registration_request.room
+                student.status = 'مرفوض'
+                student.save()
+                registration_request.status = 'مرفوض'
+                registration_request.save()
+    def approve_requests(modeladmin, request, queryset):
+        for registration_request in queryset:
+            if registration_request.status != 'تمت الموافقة':
+                student = registration_request.student
+                student.university = registration_request.university
+                student.unitNumber = registration_request.unitNumber
+                student.room = registration_request.room
+                student.status = 'تمت الموافقة'
+                student.save()
+                registration_request.status = 'تمت الموافقة'
+                registration_request.save()
+    approve_requests.short_description = "الموافقة على الطلبات المحددة"
+    reject_requests.short_description = "رفض الطلبات المحددة"
     actions = [approve_requests, reject_requests]
 class StudentAdmin(admin.ModelAdmin):
     list_display = ['user','unitNumber','room','status']
     list_filter = ['status']
     search_fields = ['phone']
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.groups.filter(name='مشرف وحدة').exists():
+            user_unit_number = request.user.unitNumber
+            qs = qs.filter(unitNumber=user_unit_number)
+        return qs
+    def get_fields(self, request, obj=None):
+        if request.user.groups.filter(name='مشرف وحدة').exists():
+            return ['room']  
+        else:
+            return ['user','email', 'first_name', 'last_name', 'phone', 'year','unitNumber', 'room', 'idNationalNumber', 'university', 'faculty', 'section','status']
+    def has_change_permission(self, request, obj=None):
+            return True  
 class CustomuserAdmin(admin.ModelAdmin):
+    exclude = ('email_verification_code',)
     actions = ['logout_all_users']
 
     def logout_all_users(self, request, queryset):
@@ -63,8 +75,8 @@ class CustomuserAdmin(admin.ModelAdmin):
         self.message_user(request, "All users have been logged out successfully.")
     
     logout_all_users.short_description = "Logout all users"
-    list_display = ['get_full_name','job']
-    list_filter = ['job']
+    list_display = ['get_full_name','job','status']
+    list_filter = ['status']
     search_fields = ['idNationalNumber']
 class BreadOrderAdmin(admin.ModelAdmin):
     exclude = ('rule',)  
@@ -83,7 +95,51 @@ class BreadOrderAdmin(admin.ModelAdmin):
     approve_orders.short_description = "الموافقة على الطلبات المحددة"
 
     actions = [approve_orders]
+class JobRequestAdmin(admin.ModelAdmin):
+    exclude = ('status',)
+    list_display = ['student','request_number','status','finishTime']
+    list_filter = ['status']
+    search_fields = ['request_number']
+    def approve_requests(self, request, queryset):
+        for order in queryset:
+            if order.status != 'تمت الموافقة':
+                order.status = 'تمت الموافقة'
+                order.save()
+        self.message_user(request, f"تمت الموافقة على {queryset.count()} طلبات بنجاح.")
 
+    approve_requests.short_description = "الموافقة على الطلبات المحددة"
+
+    def reject_requests(self, request, queryset):
+        for order in queryset:
+            if order.status != 'تم الرفض':
+                order.status = 'تم الرفض'
+                order.save()
+        self.message_user(request, f"تمت رفض {queryset.count()} طلبات بنجاح.")
+
+    reject_requests.short_description = "رفض على الطلبات المحددة"
+
+    actions = [approve_requests,reject_requests]   
+class MaintenanceRequestAdmin(admin.ModelAdmin):
+    exclude = ('status',)
+    list_display = ['student','request_number','room','unitNumber','status']
+    list_filter = ['status','unitNumber']
+    search_fields = ['request_number']
+    def approve_requests(self, request, queryset):
+        for order in queryset:
+            if order.status != 'ستتم معالجته':
+                order.status = 'ستتم معالجته'
+                order.save()
+        self.message_user(request, f"تمت الموافقة على {queryset.count()} طلبات بنجاح.")
+
+    approve_requests.short_description = "تم الاطلاع عليه"
+
+    actions = [approve_requests]   
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.groups.filter(name='مشرف وحدة').exists():
+            user_unit_number = request.user.unitNumber
+            qs = qs.filter(unitNumber=user_unit_number)
+        return qs
 
 admin.site.register(BreadOrder, BreadOrderAdmin)
 admin.site.register(Customuser,CustomuserAdmin)
@@ -93,6 +149,9 @@ admin.site.register(Student,StudentAdmin)
 admin.site.register(Universitie)
 admin.site.register(Room,RoomAdmin)
 admin.site.register(Unit)
+admin.site.register(JobRequest,JobRequestAdmin)
+admin.site.register(MaintenanceRequest,MaintenanceRequestAdmin)
+
 
 
 

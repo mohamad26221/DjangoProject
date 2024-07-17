@@ -2,7 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
+from guardian.shortcuts import assign_perm
 from .managers import UserManager
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 from universitie.models import Universitie , Unit , Room
 
 AUTH_PROVIDERS ={'email':'email', 'google':'google', 'github':'github', 'linkedin':'linkedin'}
@@ -30,7 +33,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE,default=None,null=True)
     city = models.CharField(max_length=20,default=None,null=True)
-    year = models.IntegerField(default=None,null=True)
+    year = models.DateField(default=None,null=True)
     typeJob = models.CharField(max_length=10, default=None,null=True)
     img = models.CharField(max_length=200,null=True,default=None)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)
@@ -38,6 +41,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
         ('student', 'Student'),
         ('staff', 'Staff'),)
     job = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='student',null=True)
+    email_verification_code = models.CharField(max_length=20, null=True, blank=True)
     USERNAME_FIELD = "email"
 
     REQUIRED_FIELDS = ["first_name", "last_name"]
@@ -68,20 +72,33 @@ class Student(models.Model):
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     faculty = models.CharField(max_length=20,default=None,null=True)
     section = models.CharField(max_length=20,default=None,null=True)
-    year = models.IntegerField(default=None,null=True)
+    year = models.DateField(default=None,null=True)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)   
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        assign_perm('change_room', self.user, self)
+    class Meta:
+        permissions = [
+            ('change_room', 'Can change room field'),
+        ]
 class Staff(models.Model):
     user = models.OneToOneField(Customuser, on_delete=models.CASCADE)
     email = models.EmailField(max_length=255,default=None,null=True, unique=True)
     first_name = models.CharField(max_length=100,default=None,null=True)
     last_name = models.CharField(max_length=100,default=None,null=True)
     phone = models.CharField(max_length=15,default=None,null=True)
+    unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
-    year = models.IntegerField(default=None,null=True)
-    typeJob = models.CharField(max_length=10, default=None,null=True)  
+    year = models.DateField(default=None,null=True)
+    USER_TYPE_CHOICES = (
+        ('مشرف وحدة', 'مشرف وحدة'),
+        ('موظف ذاتية','موظف ذاتية'),
+        ('معتمد خبز','معتمد خبز'),
+        ('حارس باب','حارس باب'),)
+    typeJob = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=None,null=True)  
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 class RegistrationRequest(models.Model):

@@ -2,6 +2,7 @@ from django.db.models.signals import post_save,post_delete,pre_save,pre_delete
 from django.dispatch import receiver
 from .models import Student,Customuser,Staff
 from django.db.models import F
+from django.contrib.auth.models import Group
 from service.models import BreadOrder
 
 @receiver(pre_save, sender=Student)
@@ -10,7 +11,6 @@ def store_old_room(sender, instance, **kwargs):
         instance._old_room = Student.objects.get(pk=instance.pk).room
     else:
         instance._old_room = None
-
 @receiver(post_save, sender=Student)
 def update_room_student_count_on_save(sender, instance, created, **kwargs):
     if created:
@@ -28,7 +28,6 @@ def update_room_student_count_on_save(sender, instance, created, **kwargs):
             if new_room:
                 new_room.number_of_students += 1
                 new_room.save()
-
 @receiver(post_delete, sender=Student)
 def update_room_student_count_on_delete(sender, instance, **kwargs):
     room = instance.room
@@ -109,6 +108,62 @@ def create_student_profile(sender, instance, created, **kwargs):
             instance.save(update_fields=['is_staff'])
         except Staff.DoesNotExist:
             pass 
+
+@receiver(post_save, sender=Student)
+def create_student_profile(sender, instance, created, **kwargs):
+    if not created :
+        try:
+            customuser = instance.user  
+            if customuser:
+                customuser.email = instance.email
+                customuser.first_name = instance.first_name
+                customuser.last_name = instance.last_name
+                customuser.phone = instance.phone
+                customuser.unitNumber = instance.unitNumber
+                customuser.room = instance.room
+                customuser.university = instance.university
+                customuser.faculty = instance.faculty
+                customuser.section = instance.section
+                customuser.idNationalNumber = instance.idNationalNumber
+                customuser.year = instance.year
+                customuser.save()
+        except Student.DoesNotExist:
+            pass
+@receiver(post_save, sender=Staff)
+def create_student_profile(sender, instance, created, **kwargs):
+    available_groups = ['مشرف وحدة','موظف ذاتية','معتمد خبز','حارس باب']
+    if not created : 
+        try:
+            customuser = instance.user  
+            if instance.typeJob:
+                customuser.groups.clear()
+            if customuser:
+                customuser.email = instance.email
+                customuser.first_name = instance.first_name
+                customuser.last_name = instance.last_name
+                customuser.phone = instance.phone
+                customuser.unitNumber = instance.unitNumber
+                customuser.university = instance.university
+                customuser.idNationalNumber = instance.idNationalNumber
+                customuser.year = instance.year
+                if instance.typeJob in available_groups:
+                    group = Group.objects.get(name=instance.typeJob)
+                    customuser.groups.add(group)
+                customuser.save()
+        except Staff.DoesNotExist:
+            pass
+
+
+
+        if instance.typeJob in available_groups:
+            group = Group.objects.get(name=instance.typeJob)
+            instance.user.groups.add(group)
+            instance.user.save()
+
+
+
+
+    
 @receiver(pre_delete, sender=BreadOrder)
 def update_rule(sender, instance, **kwargs):
     current_position = instance.rule

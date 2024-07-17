@@ -27,9 +27,10 @@ def custom_exception_handler(exc, context):
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
     password2 = serializers.CharField(max_length=68, min_length=6, write_only=True)
+    
     class Meta:
         model = Customuser
-        fields = ['email', 'first_name', 'last_name', 'phone', 'password', 'password2','year', 'job', 'unitNumber', 'room','idNationalNumber', 'university', 'faculty', 'section']
+        fields = ['email', 'first_name', 'last_name', 'phone', 'password', 'password2', 'year', 'job', 'unitNumber', 'room', 'idNationalNumber', 'university', 'faculty', 'section']
 
     def validate(self, attrs):
         password = attrs.get('password')
@@ -39,15 +40,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("كلمة المرور غير متطابقة")
 
         return attrs
-
-    def create(self, validated_data):
-        validated_data.pop('password2') 
-        job = validated_data.pop('job')
-        password = validated_data.pop('password')
-
-        user = Customuser.objects.create_user(**validated_data, password=password, job=job)
-
-        return user
+class EmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    email_verification_code = serializers.CharField(max_length=6)
 class RegistrationRequestSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
 
