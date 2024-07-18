@@ -1,7 +1,9 @@
 from django.contrib import admin
 from .models import Customuser ,Student,Staff,RegistrationRequest
-from django.utils import timezone
+from django.urls import path
+from .views import change_language
 from service.models import BreadOrder ,JobRequest,MaintenanceRequest
+from django.utils.translation import gettext_lazy as _
 from universitie.models import Universitie,Unit,Room
 from django.contrib.sessions.models import Session
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
@@ -13,6 +15,7 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
     list_display = ['student', 'university', 'unitNumber', 'room', 'status']
     list_filter = ['status']
     search_fields = ['idNationalNumber']
+
     def reject_requests(modeladmin, request, queryset):
         for registration_request in queryset:
             if registration_request.status != 'مرفوض':
@@ -69,10 +72,10 @@ class CustomuserAdmin(admin.ModelAdmin):
             except Exception as e:
                 self.message_user(request, f'Error: {str(e)}', level='error')
         
-        sessions = Session.objects.filter(expire_date__gte=timezone.now())
+        sessions = Session.objects.all()
         for session in sessions:
-            data = session.get_decoded()
-            if data.get('_auth_user_id') in user_ids:
+            session_data = session.get_decoded()
+            if str(session_data.get('_auth_user_id')) in map(str, user_ids):
                 session.delete()
 
         self.message_user(request, "Selected users have been logged out successfully.")
@@ -143,6 +146,31 @@ class MaintenanceRequestAdmin(admin.ModelAdmin):
             user_unit_number = request.user.unitNumber
             qs = qs.filter(unitNumber=user_unit_number)
         return qs
+class CustomAdminSite(admin.AdminSite):
+    site_header = "Custom Admin"
+    site_title = "Admin Portal"
+    index_title = "Welcome to Admin Portal"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('change-language/', self.admin_view(change_language), name='change_language'),
+        ]
+        return custom_urls + urls
+
+    def each_context(self, request):
+        context = super().each_context(request)
+        context['available_languages'] = [
+            ('en', _('English')),
+            ('ar', _('Arabic'))
+        ]
+        return context
+
+admin_site = CustomAdminSite(name='customadmin')
+
+
+
+
 
 admin.site.register(BreadOrder, BreadOrderAdmin)
 admin.site.register(Customuser,CustomuserAdmin)

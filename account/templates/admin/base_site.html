@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block nav-global %}
+<nav class="nav-global">
+    <ul>
+        <li><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li><a href="{% url 'change_language' %}">{% trans 'Change Language' %}</a></li>
+    </ul>
+</nav>
+{% endblock %}

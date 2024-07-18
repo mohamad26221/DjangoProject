@@ -31,6 +31,8 @@ class BreadOrder(models.Model):
 
     def __str__(self):
         return f"Order {self.order_number} by {self.student}"
+    class Meta:
+        verbose_name_plural = "طلبات الخبز"
 class JobRequest(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     attachments = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/')
@@ -52,6 +54,9 @@ class JobRequest(models.Model):
         super(JobRequest, self).save(*args, **kwargs)    
     def __str__(self):
         return f"Order {self.request_number} by {self.student}"
+    class Meta:
+        verbose_name_plural = "طلبات اذن العمل"
+        verbose_name = ("طلبات اذن العمل")        
 class MaintenanceRequest(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)  
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='fail_in_room',default=None,null=True)
@@ -75,3 +80,5 @@ class MaintenanceRequest(models.Model):
 
     def __str__(self):
         return f"Maintenance Request {self.request_number} by {self.student}"
+    class Meta:
+        verbose_name_plural = "طلبات الاعطال"

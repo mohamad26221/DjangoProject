@@ -1,9 +1,14 @@
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
-import random
+import random , django
+from django.conf import settings
+from django.shortcuts import render, redirect
 from rest_framework.generics import GenericAPIView
+from django.utils.translation import activate
+from django.urls import reverse
 from rest_framework.response import Response
 from django.utils.crypto import get_random_string
+from .forms import LanguageForm
 from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404, redirect
 from service.models import BreadOrder
@@ -128,6 +133,7 @@ class RegistrationRequestView(GenericAPIView):
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class LogoutView(APIView):  
+
     def post(self, request):
         refresh_token = request.data.get("refresh_token")
         if refresh_token is None:
@@ -140,3 +146,15 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+def change_language(request):
+    if request.method == 'POST':
+        form = LanguageForm(request.POST)
+        if form.is_valid():
+            language = form.cleaned_data['language']
+            activate(language)
+            response = redirect(reverse('admin:index'))
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, language)
+            return response
+    else:
+        form = LanguageForm()
+    return render(request, 'admin/change_language.html', {'form': form})

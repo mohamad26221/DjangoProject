@@ -59,7 +59,9 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     @property
     def get_full_name(self):
         return f"{self.first_name.title()} {self.last_name.title()}"
-
+    class Meta:
+        verbose_name_plural = "المستخدمين"
+        verbose_name = ("مستخدم") 
 class Student(models.Model):
     user = models.OneToOneField(Customuser, on_delete=models.CASCADE, related_name='student_profile')
     email = models.EmailField(max_length=255,default=None,null=True, unique=True)
@@ -83,6 +85,9 @@ class Student(models.Model):
         permissions = [
             ('change_room', 'Can change room field'),
         ]
+    class Meta:
+        verbose_name_plural = "الطلاب"
+        verbose_name = ("طالب")  
 class Staff(models.Model):
     user = models.OneToOneField(Customuser, on_delete=models.CASCADE)
     email = models.EmailField(max_length=255,default=None,null=True, unique=True)
@@ -101,6 +106,9 @@ class Staff(models.Model):
     typeJob = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=None,null=True)  
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    class Meta:
+        verbose_name_plural = "الموظفين"
+        verbose_name = ("الموظفين")  
 class RegistrationRequest(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None,null=True)
@@ -114,3 +122,6 @@ class RegistrationRequest(models.Model):
 
     def __str__(self):
         return f"Request for {self.student} at {self.university}"
+    class Meta:
+        verbose_name_plural = "طلبات التسجيل في السكن"
+        verbose_name = ("طلبات التسجيل في السكن")         

@@ -1,0 +1,16 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Change Language" %}</title>
+</head>
+<body>
+    <h1>{% trans "Change Language" %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{% trans "Change" %}</button>
+    </form>
+</body>
+</html>
