@@ -1,5 +1,6 @@
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
+import random
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from django.utils.crypto import get_random_string
@@ -27,8 +28,11 @@ class RegisterUserView(GenericAPIView):
             
             if Customuser.objects.filter(email=email).exists():
                 return Response({'error': 'المستخدم بهذا البريد الإلكتروني موجود بالفعل'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            verification_code = get_random_string(length=6)
+            def get_random_numeric_string(length=6):
+                numbers = '0123456789'
+                return ''.join(random.choice(numbers) for _ in range(length))
+
+            verification_code = get_random_numeric_string(6)
             temporary_user_data[email] = {
                 'first_name': user_data['first_name'],
                 'last_name': user_data['last_name'],

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Customuser ,Student,Staff,RegistrationRequest
+from django.utils import timezone
 from service.models import BreadOrder ,JobRequest,MaintenanceRequest
 from universitie.models import Universitie,Unit,Room
 from django.contrib.sessions.models import Session
@@ -56,25 +57,27 @@ class StudentAdmin(admin.ModelAdmin):
             return True  
 class CustomuserAdmin(admin.ModelAdmin):
     exclude = ('email_verification_code',)
-    actions = ['logout_all_users']
+    actions = ['logout_selected_users']
 
-    def logout_all_users(self, request, queryset):
-        # Blacklist all tokens
-        tokens = OutstandingToken.objects.all()
+    def logout_selected_users(self, request, queryset):
+        user_ids = queryset.values_list('id', flat=True)
+        
+        tokens = OutstandingToken.objects.filter(user_id__in=user_ids)
         for token in tokens:
             try:
                 BlacklistedToken.objects.get_or_create(token=token)
             except Exception as e:
                 self.message_user(request, f'Error: {str(e)}', level='error')
         
-        # Clear all sessions
-        sessions = Session.objects.all()
+        sessions = Session.objects.filter(expire_date__gte=timezone.now())
         for session in sessions:
-            session.delete()
+            data = session.get_decoded()
+            if data.get('_auth_user_id') in user_ids:
+                session.delete()
 
-        self.message_user(request, "All users have been logged out successfully.")
+        self.message_user(request, "Selected users have been logged out successfully.")
     
-    logout_all_users.short_description = "Logout all users"
+    logout_selected_users.short_description = "Logout selected users"
     list_display = ['get_full_name','job','status']
     list_filter = ['status']
     search_fields = ['idNationalNumber']
@@ -155,7 +158,7 @@ admin.site.register(MaintenanceRequest,MaintenanceRequestAdmin)
 
 
 
-admin.site.site_header = 'التسجيل في السكن'
+admin.site.site_header = 'ادارة السكن الجامعي'
 admin.site.index_title='ادارة السكن الجامعي'
 admin.site.site_title = 'Tishreen'
 admin.site.site_url = "التسحيل في السكن"
