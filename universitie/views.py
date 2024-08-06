@@ -5,6 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from universitie.models import Universitie , Unit ,Room
 from rest_framework import status
+from django.http import JsonResponse
+import time
 from rest_framework.exceptions import NotFound
 from .serializers import UniversitySearchRequestSerializer,UniversityUnitInputSerializer,RoomSerializer
 
@@ -70,3 +72,8 @@ class RoomsView(GenericAPIView):
             })
 
         return Response(rooms_data)
+def long_polling_view(request):
+    # تأخير للمحاكاة
+    time.sleep(1)
+    data = {'message': 'New update!'}
+    return JsonResponse(data)
