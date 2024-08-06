@@ -1,17 +1,15 @@
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
-import random , django
+import random 
 from django.conf import settings
 from django.shortcuts import render, redirect
 from rest_framework.generics import GenericAPIView
 from django.utils.translation import activate
 from django.urls import reverse
 from rest_framework.response import Response
-from django.utils.crypto import get_random_string
 from .forms import LanguageForm
 from django.core.mail import EmailMessage
-from django.shortcuts import get_object_or_404, redirect
-from service.models import BreadOrder
+from django.shortcuts import  redirect
 from rest_framework import status , serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Customuser

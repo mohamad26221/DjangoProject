@@ -160,10 +160,6 @@ def create_student_profile(sender, instance, created, **kwargs):
             instance.user.groups.add(group)
             instance.user.save()
 
-
-
-
-    
 @receiver(pre_delete, sender=BreadOrder)
 def update_rule(sender, instance, **kwargs):
     current_position = instance.rule
