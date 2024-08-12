@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from account.models import Student
+from django.utils import timezone
 from universitie.models import Unit,Room
 class BreadOrder(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -82,3 +83,24 @@ class MaintenanceRequest(models.Model):
         return f"Maintenance Request {self.request_number} by {self.student}"
     class Meta:
         verbose_name_plural = "طلبات الاعطال"
+class Record(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE) 
+    title = models.CharField(max_length=255)
+    body = models.CharField(max_length=255)
+    date = models.DateField(default=timezone.now)
+    time = models.TimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.title} - {self.student}"
+class Notification(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE) 
+    title = models.CharField(max_length=255)
+    body = models.CharField(max_length=255)
+    date = models.DateField(default=timezone.now)
+    time = models.TimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.title} - {self.student}"
+    class Meta:
+        verbose_name_plural = "الاشعارات"
+        verbose_name = ("الاشعار")  

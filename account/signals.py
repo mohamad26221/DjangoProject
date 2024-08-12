@@ -86,7 +86,7 @@ def create_student_profile(sender, instance, created, **kwargs):
             instance.save(update_fields=['is_staff'])
         except Student.DoesNotExist:
             pass  
-    elif instance.job == 'student':
+    elif not created and instance.job == 'student':
         try:
             employee = Staff.objects.get(user=instance)
             Student.objects.create(
@@ -110,7 +110,7 @@ def create_student_profile(sender, instance, created, **kwargs):
             pass 
 
 @receiver(post_save, sender=Student)
-def create_student_profile(sender, instance, created, **kwargs):
+def update_student_profile(sender, instance, created, **kwargs):
     if not created :
         try:
             customuser = instance.user  
@@ -124,13 +124,14 @@ def create_student_profile(sender, instance, created, **kwargs):
                 customuser.university = instance.university
                 customuser.faculty = instance.faculty
                 customuser.section = instance.section
+                customuser.notification_token = instance.notification_token
                 customuser.idNationalNumber = instance.idNationalNumber
                 customuser.year = instance.year
                 customuser.save()
         except Student.DoesNotExist:
             pass
 @receiver(post_save, sender=Staff)
-def create_student_profile(sender, instance, created, **kwargs):
+def update_staff_profile(sender, instance, created, **kwargs):
     available_groups = ['مشرف وحدة','موظف ذاتية','معتمد خبز','حارس باب']
     if not created : 
         try:
@@ -152,13 +153,6 @@ def create_student_profile(sender, instance, created, **kwargs):
                 customuser.save()
         except Staff.DoesNotExist:
             pass
-
-
-
-        if instance.typeJob in available_groups:
-            group = Group.objects.get(name=instance.typeJob)
-            instance.user.groups.add(group)
-            instance.user.save()
 
 @receiver(pre_delete, sender=BreadOrder)
 def update_rule(sender, instance, **kwargs):

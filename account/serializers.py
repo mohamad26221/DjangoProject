@@ -49,17 +49,14 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RegistrationRequest
-        fields = [ 'email', 'university', 'unitNumber', 'room', 'attachments', 'payment_method']
+        fields = [ 'email', 'university', 'unitNumber', 'room', 'Front_face','back_face','Face_picture','payment_method']
         extra_kwargs = {
-            'attachments': {'required': False},
+            'Front_face': {'required': False},
+            'back_face': {'required': False},
+            'Face_picture': {'required': False},
             'status': {'write_only': True},
             'idNationalNumber': {'write_only': True}
         }
-    def validate_email(self, value):
-        if RegistrationRequest.objects.filter(student__email=value).exists():
-            raise serializers.ValidationError("البريد الالكتروني مستخدم من قبل في التسجيل")
-        return value
-
     def create(self, validated_data):
         email = validated_data.pop('email', None)
         
@@ -77,12 +74,29 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
             unitNumber=validated_data.get('unitNumber'),
             idNationalNumber=validated_data.get('idNationalNumber'),
             room=validated_data.get('room'),
-            attachments=validated_data.get('attachments'),
+            Front_face=validated_data.get('Front_face'),
+            back_face=validated_data.get('back_face'),
+            Face_picture=validated_data.get('Face_picture'),
             payment_method=validated_data.get('payment_method'),
             status='في انتظار الموافقة'  ,
         )
         
         return registration_request
+class RegistrationRequestUpdateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True) 
+
+    class Meta:
+        model = RegistrationRequest
+        fields = [ 'email', 'university', 'unitNumber', 'room', 'Front_face','back_face','Face_picture','payment_method']
+        extra_kwargs = {
+            'university': {'required': False},
+            'unitNumber': {'required': False},
+            'room': {'required': False},
+            'Front_face': {'required': False},
+            'back_face': {'required': False},
+            'Face_picture': {'required': False},
+            'payment_method': {'required': False},
+        }
 class LoginSerializer(serializers.Serializer): 
     email = serializers.EmailField(
         max_length=155,
@@ -138,6 +152,7 @@ class LoginSerializer(serializers.Serializer):
         user.last_login = timezone.now()
         user.save()
         return {
+            'id': user.id,
             'firstName': user.first_name,
             'lastName': user.last_name,
             'fatherName': user.fathername,
@@ -157,3 +172,8 @@ class LoginSerializer(serializers.Serializer):
             'token': str(tokens.get('access')),
             'refresh_token': str(tokens.get('refresh')) 
         }
+class CustomUserIdSerializer(serializers.Serializer): # من اجل جلب بيانات المستخدم من خلال الايدي
+    id = serializers.IntegerField()
+class FCMTokenSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    token = serializers.CharField(max_length=255)

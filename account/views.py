@@ -1,7 +1,10 @@
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 import random 
+import http.client
+import json
 from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import render, redirect
 from rest_framework.generics import GenericAPIView
 from django.utils.translation import activate
@@ -12,8 +15,8 @@ from django.core.mail import EmailMessage
 from django.shortcuts import  redirect
 from rest_framework import status , serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Customuser
-from .serializers import UserRegisterSerializer, LoginSerializer,RegistrationRequestSerializer,EmailVerificationSerializer
+from .models import Customuser,Student,RegistrationRequest
+from .serializers import UserRegisterSerializer, LoginSerializer,RegistrationRequestSerializer,EmailVerificationSerializer,CustomUserIdSerializer,RegistrationRequestUpdateSerializer,FCMTokenSerializer
 class CustomAuthenticationFailed(APIException):
 
     status_code = 200
@@ -130,6 +133,31 @@ class RegistrationRequestView(GenericAPIView):
             student.save()
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class RegistrationRequestUpdateView(GenericAPIView):
+    serializer_class = RegistrationRequestUpdateSerializer
+
+    def put(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            try:
+                student = Student.objects.get(email=email)
+                registration_request = RegistrationRequest.objects.get(student=student)
+
+                for attr, value in serializer.validated_data.items():
+                    if value is not None: 
+                        setattr(registration_request, attr, value)
+                
+                registration_request.save()
+
+                return Response({"message": "تم تحديث طلب التسجيل بنجاح"}, status=status.HTTP_200_OK)
+
+            except Student.DoesNotExist:
+                return Response({"error": "الطالب غير موجود"}, status=status.HTTP_404_NOT_FOUND)
+            except RegistrationRequest.DoesNotExist:
+                return Response({"error": "طلب التسجيل غير موجود"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class LogoutView(APIView):  
 
     def post(self, request):
@@ -156,3 +184,98 @@ def change_language(request):
     else:
         form = LanguageForm()
     return render(request, 'admin/change_language.html', {'form': form})
+class CustomUserDetailView(GenericAPIView):
+    serializer_class = CustomUserIdSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            student_id = serializer.validated_data.get('id')
+            try:
+                user = Customuser.objects.get(id=student_id)
+                tokens = RefreshToken.for_user(user)
+                response_data = {
+                    'id': user.id,
+                    'firstName': user.first_name,
+                    'lastName': user.last_name,
+                    'fatherName': user.fathername,
+                    'motherName': user.mothername,
+                    'phoneNumber': user.phone,
+                    'idNationalNumber': user.idNationalNumber,
+                    'university': user.university.name if user.university else None,
+                    'faculty': user.faculty,
+                    'section': user.section,
+                    'unitNumber': user.unitNumber.Unit_name if user.unitNumber else None,
+                    'roomNumber': user.room.number if user.room else None,
+                    'city': user.city,
+                    'year': user.year,
+                    'status': user.status,
+                    'job': user.job,
+                    'img': user.img,
+                    'token': str(tokens.access_token),
+                    'refresh_token': str(tokens),
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            except Customuser.DoesNotExist:
+                return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def send_push_notification(token, title, body):
+    conn = http.client.HTTPSConnection("fcm.googleapis.com")
+    payload = {
+        "message": {
+            "token": token,  
+            "notification": {
+                "title": title, 
+                "body": body   
+            },
+            "android": {
+                "notification": {
+                    "notification_priority": "PRIORITY_MAX",
+                    "sound": "default"
+                }
+            },
+            "apns": {
+                "payload": {
+                    "aps": {
+                        "content_available": True
+                    }
+                }
+            },
+            "data": {
+                "type": "notification",
+                "id": "studentId",  
+                "click_action": "FLUTTER_NOTIFICATION_CLICK"
+            }
+        }
+    }
+    try:
+        print("Payload to be sent:", json.dumps(payload, indent=4))
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer YOUR_SERVER_KEY'
+        }
+        conn.request("POST", "/v1/projects/YOUR_PROJECT_ID/messages:send", json.dumps(payload), headers)
+        res = conn.getresponse()
+        data = res.read()
+        print(data.decode("utf-8"))
+    except Exception as e:
+        print(f"An error occurred: {e}")
+class UpdateFCMTokenView(GenericAPIView):
+    serializer_class = FCMTokenSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            student_id = serializer.validated_data['id']
+            token = serializer.validated_data['token']
+            
+            try:
+                student = Student.objects.get(id=student_id)
+                student.notification_token = token
+                student.save()
+                return Response({'status': 'Token updated successfully'}, status=status.HTTP_200_OK)
+            except Student.DoesNotExist:
+                return Response({'error': 'Student with this ID does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

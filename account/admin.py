@@ -1,8 +1,9 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import Customuser ,Student,Staff,RegistrationRequest
 from django.urls import path
-from .views import change_language
-from service.models import BreadOrder ,JobRequest,MaintenanceRequest
+from .views import change_language,send_push_notification
+from service.models import BreadOrder ,JobRequest,MaintenanceRequest,Notification
 from django.utils.translation import gettext_lazy as _
 from universitie.models import Universitie,Unit,Room
 from django.contrib.sessions.models import Session
@@ -27,6 +28,15 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
                 student.save()
                 registration_request.status = 'مرفوض'
                 registration_request.save()
+                Notification.objects.create(
+                student=student,
+                title='طلب التسجيل مرفوض',
+                body=f"تم رفض طلب التسجيل الخاص بك في {registration_request.university.name}.",
+                date=timezone.now().date(),
+                time=timezone.now().time()
+                )
+                send_push_notification(student.notification_token, "طلب التسجيل مرفوض", "نأسف، تم رفض طلب التسجيل الخاص بك.")
+
     def approve_requests(modeladmin, request, queryset):
         for registration_request in queryset:
             if registration_request.status != 'تمت الموافقة':
@@ -38,6 +48,15 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
                 student.save()
                 registration_request.status = 'تمت الموافقة'
                 registration_request.save()
+                Notification.objects.create(
+                student=student,
+                title='طلب التسجيل تمت الموافقة عليه',
+                body=f" تمت الموافقة على طلب التسجيل الخاص بك في سكن {registration_request.university.name}.",
+                date=timezone.now().date(),
+                time=timezone.now().time()
+                )
+                send_push_notification(student.notification_token, "طلب التسجيل تمت الموافقة عليه", "تهانينا، تمت الموافقة على طلب التسجيل الخاص بك في سكن جامعة تشرين.")
+
     approve_requests.short_description = "الموافقة على الطلبات المحددة"
     reject_requests.short_description = "رفض الطلبات المحددة"
     actions = [approve_requests, reject_requests]
@@ -169,13 +188,11 @@ class CustomAdminSite(admin.AdminSite):
 admin_site = CustomAdminSite(name='customadmin')
 
 
-
-
-
 admin.site.register(BreadOrder, BreadOrderAdmin)
 admin.site.register(Customuser,CustomuserAdmin)
 admin.site.register(RegistrationRequest,RegistrationRequestAdmin)
 admin.site.register(Staff)
+admin.site.register(Notification)
 admin.site.register(Student,StudentAdmin)
 admin.site.register(Universitie)
 admin.site.register(Room,RoomAdmin)
