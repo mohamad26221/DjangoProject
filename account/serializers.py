@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError
+from universitie.models import Unit,Universitie,Room
 
 class CustomAuthenticationFailed(APIException):
     status_code = 200
@@ -45,43 +46,55 @@ class EmailVerificationSerializer(serializers.Serializer):
     email_verification_code = serializers.CharField(max_length=6)
 class RegistrationRequestSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
-
+    university = serializers.CharField(write_only=True)
+    unitNumber = serializers.CharField(write_only=True)
+    room = serializers.CharField(write_only=True)
 
     class Meta:
         model = RegistrationRequest
-        fields = [ 'email', 'university', 'unitNumber', 'room', 'Front_face','back_face','Face_picture','payment_method']
+        fields = ['email', 'university', 'unitNumber', 'room', 'Front_face', 'back_face', 'Face_picture', 'payment_method']
         extra_kwargs = {
             'Front_face': {'required': False},
             'back_face': {'required': False},
             'Face_picture': {'required': False},
             'status': {'write_only': True},
-            'payment_method': {'payment_method': True},
+            'payment_method': {'write_only': True},
+            'Front_face': {'write_only': True},
+            'back_face': {'write_only': True},
+            'Face_picture': {'write_only': True},
             'idNationalNumber': {'write_only': True}
         }
+
     def create(self, validated_data):
         email = validated_data.pop('email', None)
-        
+
+
         try:
             student = Student.objects.get(email=email)
         except Student.DoesNotExist:
-            raise serializers.ValidationError("البريد الالكتروني هذا غير موجود تاكد من صحة الادخال")
+            raise serializers.ValidationError("البريد الالكتروني هذا غير موجود تأكد من صحة الإدخال")
+
         if RegistrationRequest.objects.filter(student=student).exists():
             raise serializers.ValidationError("تم تسجيل هذا الطالب بالفعل")
-        
-        
+        try:
+            university = Universitie.objects.get(name=validated_data.pop('university'))
+            unit = Unit.objects.get(Unit_name=validated_data.pop('unitNumber'))
+            room = Room.objects.get(number=validated_data.pop('room'))
+        except (Universitie.DoesNotExist, Unit.DoesNotExist, Room.DoesNotExist):
+            raise serializers.ValidationError("تأكد من صحة المدخلات الخاصة بالجامعة أو الوحدة أو الغرفة")
+
         registration_request = RegistrationRequest.objects.create(
             student=student,
-            university=validated_data.get('university'),
-            unitNumber=validated_data.get('unitNumber'),
-            idNationalNumber=validated_data.get('idNationalNumber'),
-            room=validated_data.get('room'),
+            university=university,
+            unitNumber=unit,
+            room=room,
             Front_face=validated_data.get('Front_face'),
             back_face=validated_data.get('back_face'),
             Face_picture=validated_data.get('Face_picture'),
             payment_method=validated_data.get('payment_method'),
-            status='في انتظار الموافقة'  ,
+            status='في انتظار الموافقة',
         )
-        
+
         return registration_request
 class RegistrationRequestUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True) 

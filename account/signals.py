@@ -152,7 +152,6 @@ def update_staff_profile(sender, instance, created, **kwargs):
                 customuser.university = instance.university
                 customuser.idNationalNumber = instance.idNationalNumber
                 customuser.year = instance.year
-                customuser.status = instance.status
                 if instance.typeJob in available_groups:
                     group = Group.objects.get(name=instance.typeJob)
                     customuser.groups.add(group)

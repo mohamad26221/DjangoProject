@@ -36,7 +36,7 @@ class Customuser(AbstractBaseUser, PermissionsMixin):
     year = models.CharField(max_length=10,default=None,null=True)
     notification_token = models.CharField(max_length=255, null=True, blank=True)  
     typeJob = models.CharField(max_length=10, default=None,null=True)
-    img = models.CharField(max_length=200,null=True,default=None)
+    img = models.CharField(max_length=200,null=True,default=None, blank=True)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)
     USER_TYPE_CHOICES = (
         ('student', 'Student'),
@@ -117,10 +117,10 @@ class RegistrationRequest(models.Model):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None,null=True)
     idNationalNumber = models.IntegerField(unique=True,default=None,null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='requests_for_room',default=None,null=True)
-    Front_face = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None)
-    back_face = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None)
-    Face_picture = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None)
-    payment_method = models.CharField(max_length=50)
+    Front_face = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None, blank=True, null=True)
+    back_face = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None, blank=True, null=True)
+    Face_picture = models.FileField(upload_to='C:/Users/Administrator/Desktop/Django-project/venv/subject/account/attachments/',default=None, blank=True, null=True)
+    payment_method = models.CharField(max_length=50,default=None, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default='في انتظار الموافقة')
 
