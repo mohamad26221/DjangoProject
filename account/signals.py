@@ -48,6 +48,7 @@ def create_student_profile(sender, instance, created, **kwargs):
                 university=instance.university,
                 faculty=instance.faculty,
                 section=instance.section,
+                status = instance.status,
                 idNationalNumber=instance.idNationalNumber,
                 year=instance.year)
         instance.is_staff = False  
@@ -62,6 +63,7 @@ def create_student_profile(sender, instance, created, **kwargs):
                 university=instance.university,
                 idNationalNumber=instance.idNationalNumber,
                 year=instance.year,
+                status = instance.status,
                 typeJob=instance.typeJob,
             )        
             instance.is_staff = True  
@@ -79,6 +81,7 @@ def create_student_profile(sender, instance, created, **kwargs):
                 university=instance.university,
                 idNationalNumber=instance.idNationalNumber,
                 year=instance.year,
+                status = instance.status,
                 typeJob=instance.typeJob,
             )
             student.delete()
@@ -101,6 +104,7 @@ def create_student_profile(sender, instance, created, **kwargs):
                 faculty=instance.faculty,
                 section=instance.section,
                 idNationalNumber=instance.idNationalNumber,
+                status = instance.status,
                 year=instance.year,
             )
             employee.delete()
@@ -127,6 +131,7 @@ def update_student_profile(sender, instance, created, **kwargs):
                 customuser.notification_token = instance.notification_token
                 customuser.idNationalNumber = instance.idNationalNumber
                 customuser.year = instance.year
+                customuser.status = instance.status
                 customuser.save()
         except Student.DoesNotExist:
             pass
@@ -147,6 +152,7 @@ def update_staff_profile(sender, instance, created, **kwargs):
                 customuser.university = instance.university
                 customuser.idNationalNumber = instance.idNationalNumber
                 customuser.year = instance.year
+                customuser.status = instance.status
                 if instance.typeJob in available_groups:
                     group = Group.objects.get(name=instance.typeJob)
                     customuser.groups.add(group)

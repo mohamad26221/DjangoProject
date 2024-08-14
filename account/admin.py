@@ -13,6 +13,7 @@ class RoomAdmin(admin.ModelAdmin):
     list_filter = ['unit']
     search_fields = ['number']
 class RegistrationRequestAdmin(admin.ModelAdmin):
+    exclude = ('payment_method',)
     list_display = ['student', 'university', 'unitNumber', 'room', 'status']
     list_filter = ['status']
     search_fields = ['idNationalNumber']
