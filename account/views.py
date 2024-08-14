@@ -196,6 +196,7 @@ class CustomUserDetailView(GenericAPIView):
                 tokens = RefreshToken.for_user(user)
                 response_data = {
                     'id': user.id,
+                    'email':user.email,
                     'firstName': user.first_name,
                     'lastName': user.last_name,
                     'fatherName': user.fathername,

@@ -55,6 +55,7 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
             'back_face': {'required': False},
             'Face_picture': {'required': False},
             'status': {'write_only': True},
+            'payment_method': {'payment_method': True},
             'idNationalNumber': {'write_only': True}
         }
     def create(self, validated_data):
@@ -153,6 +154,7 @@ class LoginSerializer(serializers.Serializer):
         user.save()
         return {
             'id': user.id,
+            'email': user.email,
             'firstName': user.first_name,
             'lastName': user.last_name,
             'fatherName': user.fathername,
