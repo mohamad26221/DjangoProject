@@ -254,9 +254,9 @@ def send_push_notification(token, title, body):
         
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer YOUR_SERVER_KEY'
+            'Authorization': 'Bearer ya29.c.c0ASRK0GZCJHQHF5SuwnT7Cxi8TaoVBdLgRNCpDdaFlgAwnb9KCPviVhDbViH2c5KA71e0tQCjJAyY1XiJLCIIHzzUsjlNa6svnpHKYNINFeCn6uYCwxkLGydDc_CrpNtISnTGYQO64ylCVwESSXKEyWUreRw9SVGrwRu4OpLI1AzjcNDn19C9fPcChMx3X7824LUKvdFzamdqU7Bd1ocUft1lYP6Y1bZ6oX304S3t3limmG9hBuNs3uOpTQ2-Hxzq64n4jEvGQX8WODF1O_8Hr3DxcQ96R3xzAaUNZzRAtj73QOKqa8XHYB2WQNS02oTdS9I3SXB8Df7UAGQHAzilNGGdHiT1GBAknFN05vf2ttSVWUQSAAfn1zeYKLwG388DRogsksmncxvF1WQ9sru8tFotXZ_9-VRjnVZmUQbpMljiM1Xs5cj_e_q_Qhswve88s0O_2e-oBI3l0rSu69layryimw5QfvU8Si6V4pQ4_gubQQ82qkSrd7J1-mkbVFJs2vfo4qX0n13cacplVVdXtXzMFI6VQh_05hWxXr50w_VggI_wbMfYtMY9ZptWWw05h-vvi-OmM2cZVcz1_p1VBvcS07gBrlF3fqYjuix20xetibFbau4rzyZY74ywgXgxSBXpMYZ9_uzggs42M3pedOFZr2JXoyv_dJ4t8wXn2FiSgbloquzl_JFMg0gMzmS62e0tuwBm1SObqheRY8BVpj3uOQJIRf71k5iovIfdgpllpfxb9YwM2bxyuZrqZcpI_6Xma-3rj6jjdYc96JekWjnkgI9FagSicbp6crwkIem-h1OZhVObun_g031hWYzMXX5XfJz03ha5onBInjsyXq2OftU4zXYvk1JR2-8lilufYdzuB9ncXIRzpdMUVkp8QQvvh8kkO9YUpJcJjOIOnlsQRuv2-1y0hke2byJf0mUWbeFlg47sjJIO5sumhtaOVQ5VBg-Wt2R0rBk0FzV16SRx6I8_agIviMOtJ8Oj'
         }
-        conn.request("POST", "/v1/projects/YOUR_PROJECT_ID/messages:send", json.dumps(payload), headers)
+        conn.request("POST", "/v1/projects/sakan-1142f/messages:send", json.dumps(payload), headers)
         res = conn.getresponse()
         data = res.read()
         print(data.decode("utf-8"))
@@ -272,8 +272,12 @@ class UpdateFCMTokenView(GenericAPIView):
             token = serializer.validated_data['token']
             
             try:
-                student = Student.objects.get(id=student_id)
+                # 
+                customuser = Customuser.objects.get(id=student_id)
+                student = Student.objects.get(user=customuser)
+                customuser.notification_token = token
                 student.notification_token = token
+                customuser.save()
                 student.save()
                 return Response({'status': 'Token updated successfully'}, status=status.HTTP_200_OK)
             except Student.DoesNotExist:

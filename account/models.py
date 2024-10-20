@@ -4,8 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 from guardian.shortcuts import assign_perm
 from .managers import UserManager
-from django.core.mail import send_mail
-from django.utils.crypto import get_random_string
+from django.utils import timezone
 from universitie.models import Universitie , Unit , Room
 
 AUTH_PROVIDERS ={'email':'email', 'google':'google', 'github':'github', 'linkedin':'linkedin'}
@@ -76,7 +75,7 @@ class Student(models.Model):
     faculty = models.CharField(max_length=20,default=None, blank=True, null=True)
     section = models.CharField(max_length=20,default=None, blank=True, null=True)
     notification_token = models.CharField(max_length=255, null=True, blank=True)  
-    year = models.CharField(max_length=10,default=None, blank=True, null=True)
+    year = models.DateField(default=timezone.now)
     status = models.CharField(max_length=20,default='غير مسجل في السكن',null=True)   
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -99,7 +98,7 @@ class Staff(models.Model):
     unitNumber = models.ForeignKey(Unit, on_delete=models.CASCADE,default=None, blank=True, null=True)
     idNationalNumber = models.IntegerField(unique=True,default=None, blank=True, null=True)
     university = models.ForeignKey(Universitie, on_delete=models.CASCADE,default=None, blank=True, null=True)
-    year = models.CharField(max_length=10,default=None, blank=True, null=True)
+    year = models.DateField()
     USER_TYPE_CHOICES = (
         ('مشرف وحدة', 'مشرف وحدة'),
         ('موظف ذاتية','موظف ذاتية'),
